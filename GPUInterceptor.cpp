@@ -1,4 +1,4 @@
-// GPUInterceptor.cpp : Modern rounded UI with owner-drawn buttons and up/down spinner.
+﻿// GPUInterceptor.cpp : Modern rounded UI with owner-drawn buttons and up/down spinner.
 // Paste the four parts in order to form the full file.
 // Requires framework.h to include <windows.h> and resource identifiers used (IDI_GPUINTERCEPTOR, IDC_GPUINTERCEPTOR, IDI_SMALL, IDD_ABOUTBOX).
 // Compile with comctl32.lib (pragma included).
@@ -94,7 +94,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hInstance = hInstance;
     wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_GPUINTERCEPTOR));
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    // Use a neutral background for the window � panel is drawn manually.
+    // Use a neutral background for the window — panel is drawn manually.
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_GPUINTERCEPTOR);
     wcex.lpszClassName = szWindowClass;
@@ -112,8 +112,23 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     ic.dwICC = ICC_UPDOWN_CLASS | ICC_STANDARD_CLASSES;
     InitCommonControlsEx(&ic);
 
-    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, 1200, 820, nullptr, nullptr, hInstance, nullptr);
+    // Window styles: no resize, no maximize
+    DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+    DWORD exStyle = 0;
+
+    // Convert client area = PANEL_W × PANEL_H → actual window size
+    RECT r = { 0, 0, PANEL_W, PANEL_H };
+    AdjustWindowRectEx(&r, style, TRUE, exStyle);
+
+    HWND hWnd = CreateWindowExW(
+        exStyle,
+        szWindowClass,
+        szTitle,
+        style,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        (r.right - r.left)+35,
+        r.bottom - r.top,
+        nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd) return FALSE;
 
@@ -225,7 +240,7 @@ void FillRoundRect(HDC hdc, RECT r, int radius, COLORREF color)
     DeleteObject(hBrush);
 }
 
-// Draw panel only � no section background bars (removed per your request)
+// Draw panel only — no section background bars (removed per your request)
 void DrawRoundedPanel(HDC hdc, RECT rcClient, RECT panelRect)
 {
     // Background shadow
@@ -253,9 +268,11 @@ void RepositionAll(HWND hWnd)
     RECT rc;
     GetClientRect(hWnd, &rc);
 
-    int px = (rc.right - PANEL_W) / 2;
-    if (px < 10) px = 10;
-    int py = 60;
+    int px = (rc.right - PANEL_W) / 2 - 10;   // shift left by 10px
+    if (px < 10) px = 10;                     // keep minimum margin
+    int py = 40;                              // shift up by 20px
+
+    int bottomPadding = 60;//change
 
     int x = px + 30;
     int y = py + 20;
@@ -465,12 +482,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetClientRect(hWnd, &rcClient);
 
         // Panel rect centered
-        int px = (rcClient.right - PANEL_W) / 2;
+        int px = (rcClient.right - PANEL_W) / 2 - 10;  // shift left
         if (px < 20) px = 20;
 
-        int py = 40;
+        int py = 20;                                    // shift up
 
-        RECT panelRect = { px, py, px + PANEL_W, py + PANEL_H };
+
+        //change
+        RECT panelRect = {
+            px,
+            py,
+            px + PANEL_W,
+            py + PANEL_H - 40   // FIX: adds bottom padding so border is visible
+        };
 
         // ---- Draw main white rounded panel --------
         // Shadow
